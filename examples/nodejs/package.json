@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@ledgerhq/hw-transport-node-hid": "^4.78.0",
+    "babel-polyfill": "^6.26.0",
+    "create-hash": "^1.2.0",
+    "metaversejs": "git+https://git@github.com/ehsueh/metaversejs.git",
+    "mvs-blockchain": "^0.1.55"
+  }
+}
