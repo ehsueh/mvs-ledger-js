@@ -98,6 +98,27 @@ const issueMSTTx = async (
   }
 };
 
+const transferMSTTx = async (sender, amount, recipient_address, symbol) => {
+  let target = {};
+  target[symbol] = amount;
+
+  change_address = sender;
+  let height = await blockchain.height();
+  let txs = await blockchain.addresses.txs([sender]);
+  let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [sender]);
+  let result = await Metaverse.output.findUtxo(utxos, target, height);
+  let tx = await Metaverse.transaction_builder.send(
+    result.utxo,
+    recipient_address,
+    undefined,
+    target,
+    change_address,
+    result.change
+  );
+  return tx;
+};
+
 module.exports.ETPTransferTx = ETPTransferTx;
 module.exports.didRegisterTx = didRegisterTx;
 module.exports.issueMSTTx = issueMSTTx;
+module.exports.transferMSTTx = transferMSTTx;
