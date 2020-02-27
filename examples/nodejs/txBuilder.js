@@ -118,7 +118,38 @@ const transferMSTTx = async (sender, amount, recipient_address, symbol) => {
   return tx;
 };
 
+const registerMITTx = async (issuer, symbol, content) => {
+  let avatar_info = await getAvatar(issuer);
+  if (avatar_info) {
+    let recipient_address = avatar_info.address;
+    let change_address = recipient_address;
+
+    let height = await blockchain.height();
+    let txs = await blockchain.addresses.txs([recipient_address]);
+    let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [
+      recipient_address
+    ]);
+    let result = await Metaverse.output.findUtxo(utxos, {}, height, 10000); //Collect utxo to pay fee of 0.0001 ETP
+    let tx = await Metaverse.transaction_builder.registerMIT(
+      result.utxo,
+      recipient_address,
+      issuer,
+      symbol,
+      content,
+      change_address,
+      result.change
+    );
+    return tx;
+  } else {
+    console.error(
+      "You need an avatar to register MST or MIT for this address."
+    );
+    throw "You need an avatar to register MST or MIT for this address.";
+  }
+};
+
 module.exports.ETPTransferTx = ETPTransferTx;
 module.exports.didRegisterTx = didRegisterTx;
 module.exports.issueMSTTx = issueMSTTx;
 module.exports.transferMSTTx = transferMSTTx;
+module.exports.registerMITTx = registerMITTx;
