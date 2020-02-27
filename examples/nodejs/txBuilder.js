@@ -3,8 +3,13 @@ const blockchain = require("mvs-blockchain")({
 });
 const Metaverse = require("metaversejs");
 
+const getAvatar = async avatar_symbol => {
+  let avatarInfo = await blockchain.avatar.get(avatar_symbol);
+  return avatarInfo;
+};
+
 const ETPTransferTx = async (sender, amount, recipient) => {
-  var target = {
+  let target = {
     ETP: amount
   };
 
@@ -33,7 +38,7 @@ const didRegisterTx = async (avatar_symbol, avatar_address) => {
   let txs = await blockchain.addresses.txs([avatar_address]);
   let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [
     avatar_address
-  ]); //Get all utxo for the avatar address
+  ]);
   let result = await Metaverse.output.findUtxo(utxos, {}, height, 100000000); //Collect utxo to pay for the fee of 1 ETP
   let tx = await Metaverse.transaction_builder.issueDid(
     result.utxo,
@@ -47,5 +52,52 @@ const didRegisterTx = async (avatar_symbol, avatar_address) => {
   return tx;
 };
 
+const issueMSTTx = async (
+  issuer,
+  symbol,
+  max_supply,
+  decimalPrecision,
+  description
+) => {
+  let avatar_info = await getAvatar(issuer);
+  if (avatar_info) {
+    let recipient_address = avatar_info.address;
+    let change_address = avatar_info.address;
+
+    let height = await blockchain.height();
+
+    let txs = await blockchain.addresses.txs([recipient_address]);
+    let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [
+      recipient_address
+    ]);
+
+    let result = await Metaverse.output.findUtxo(utxos, {}, height, 1000000000); // Fee for MST creation is 10ETP
+
+    let tx = await Metaverse.transaction_builder.issueAsset(
+      result.utxo,
+      recipient_address,
+      symbol,
+      max_supply,
+      decimalPrecision,
+      issuer,
+      description,
+      0,
+      false,
+      change_address,
+      result.change,
+      true,
+      0,
+      "testnet"
+    );
+    return tx;
+  } else {
+    console.error(
+      "You need an avatar to register MST or MIT for this address."
+    );
+    throw "You need an avatar to register MST or MIT for this address.";
+  }
+};
+
 module.exports.ETPTransferTx = ETPTransferTx;
 module.exports.didRegisterTx = didRegisterTx;
+module.exports.issueMSTTx = issueMSTTx;

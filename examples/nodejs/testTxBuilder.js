@@ -25,22 +25,46 @@ async function createWallet() {
 //   tx = await wallet.sign(tx);
 //   tx = await tx.encode();
 //   tx = await blockchain.transaction.broadcast(tx.toString("hex"));
-//   console.log("txHash in test file ==>\n")
+//   console.log("txHash in test file ==>\n", tx);
 // };
 
 // transferETP();
 
-registerAvatar = async () => {
-  let tx = await txBuilder.didRegisterTx(
+// registerAvatar = async () => {
+//   let tx = await txBuilder.didRegisterTx(
+//     "lilSister",
+//     "tD2tYRPZkUjTWx4RtGMKj5M1j8cJdzBR47"
+//   );
+//   console.log("didRegister tx in test file => \n", tx);
+//   let wallet = await createWallet();
+//   tx = await wallet.sign(tx);
+//   tx = await tx.encode();
+//   tx = await blockchain.transaction.broadcast(tx.toString("hex"));
+//   console.log("txHash in test file ==>\n", tx);
+// };
+
+// registerAvatar();
+
+const issueMST = async () => {
+  let tx = await txBuilder.issueMSTTx(
     "lilSister",
-    "tD2tYRPZkUjTWx4RtGMKj5M1j8cJdzBR47"
+    "MSTTTTT",
+    1000000,
+    4,
+    "description for MST.Symbol"
   );
-  console.log("didRegister tx in test file => \n", tx);
   let wallet = await createWallet();
-  tx = await wallet.sign(tx);
-  tx = await tx.encode();
-  tx = await blockchain.transaction.broadcast(tx.toString("hex"));
-  console.log("txHash in test file ==>\n", tx);
+  tx = await wallet.sign(tx)
+  tx = await tx.encode()
+  tx = await blockchain.transaction.broadcast(tx.toString('hex'))
+  console.log("TxHash in test file =>", tx)
 };
 
-registerAvatar();
+issueMST();
+// const getAvatar = async avatar_symbol => {
+//   let avatarInfo = await blockchain.avatar.get(avatar_symbol);
+//   console.log(avatarInfo)
+//   return avatarInfo;
+// };
+
+// getAvatar("lilSister")
