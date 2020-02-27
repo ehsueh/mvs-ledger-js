@@ -1,0 +1,110 @@
+# with prevout script as Buffer.from([])
+New APDU received:
+E042000009000000000400000002
+Init transaction parser
+Add to hash full
+04000000
+Add to hash full
+02
+Number of inputs : 2
+Process input
+New APDU received:
+E042800025EAD8B9F904609196CC843141570362E8C2223836FA622EAFDC2EF8BB17CF11B10200000000
+Process input
+Add to hash full
+EAD8B9F904609196CC843141570362E8C2223836FA622EAFDC2EF8BB17CF11B102000000
+Add to hash full
+00
+Script to read 0
+Process input script, remaining 0
+New APDU received:
+E042800004FFFFFFFF
+Process input script, remaining 0
+Add to hash full
+FFFFFFFF
+Process input
+New APDU received:
+E042800025908ECC13FC1F68968768056FFFB5BAC13F6ECAE6A2814C8B515B86B495FEEABF0100000000
+Process input
+Add to hash full
+908ECC13FC1F68968768056FFFB5BAC13F6ECAE6A2814C8B515B86B495FEEABF01000000
+Add to hash full
+00
+Script to read 0
+Process input script, remaining 0
+New APDU received:
+E042800004FFFFFFFF
+Process input script, remaining 0
+Add to hash full
+FFFFFFFF
+Process input
+Input hashing done
+New APDU received:
+E04280000103
+Input hashing done
+Add to hash full
+03
+Number of outputs : 3
+
+
+
+
+# with prevout read from ASM
+New APDU received:
+E042000009000000000400000002
+Init transaction parser
+Add to hash full
+04000000
+Add to hash full
+02
+Number of inputs : 2
+Process input
+New APDU received:
+E042800025EAD8B9F904609196CC843141570362E8C2223836FA622EAFDC2EF8BB17CF11B10200000019
+Process input
+Add to hash full
+EAD8B9F904609196CC843141570362E8C2223836FA622EAFDC2EF8BB17CF11B102000000
+Add to hash full
+19
+Script to read 25
+Process input script, remaining 25
+New APDU received:
+E04280001D76A914D2B0D45DFDBA50FBD227F968C79A29ECE05144FB88ACFFFFFFFF
+Process input script, remaining 25
+Add to hash full
+76A914D2B0D45DFDBA50FBD227F968C79A29ECE05144FB88
+Process input script, remaining 1
+Disabling P2SH consumption
+Add to hash full
+AC
+Add to hash full
+FFFFFFFF
+Process input
+New APDU received:
+E042800025908ECC13FC1F68968768056FFFB5BAC13F6ECAE6A2814C8B515B86B495FEEABF0100000019
+Process input
+Add to hash full
+908ECC13FC1F68968768056FFFB5BAC13F6ECAE6A2814C8B515B86B495FEEABF01000000
+Add to hash full
+19
+Script to read 25
+Process input script, remaining 25
+New APDU received:
+E04280001D76A914D2B0D45DFDBA50FBD227F968C79A29ECE05144FB88ACFFFFFFFF
+Process input script, remaining 25
+Add to hash full
+76A914D2B0D45DFDBA50FBD227F968C79A29ECE05144FB88
+Process input script, remaining 1
+Disabling P2SH consumption
+Add to hash full
+AC
+Add to hash full
+FFFFFFFF
+Process input
+Input hashing done
+New APDU received:
+E04280000103
+Input hashing done
+Add to hash full
+037
+Number of outputs : 3

@@ -143,7 +143,7 @@ const createDummyTransaction = async function() {
 
     let associatedKeysets = ["44'/2302'/0'/0/0", "44'/2302'/0'/0/0"];
     let changePath = "44'/2302'/0'/0/0";
-    let outputsScript = "030300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d20400000000000000000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000";
+    let outputsScript = "0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d20400000000000000000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000";
     let locktime = undefined;
     let sigHash = 1;
     let segwit = false;
@@ -154,7 +154,7 @@ const createDummyTransaction = async function() {
         version: 4,
         outputsPrefix: "040400",
         outputScriptChunks: [
-            Buffer.from("0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d204000000000000", 'hex'),
+            Buffer.from("0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e412d04000000000000", 'hex'),
             Buffer.from("00000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000", 'hex'),
             Buffer.from("b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000", 'hex'),
         ],
@@ -182,48 +182,44 @@ const createDummyTransaction = async function() {
 
 const createLedgerTransaction = async function() {
     const ledger = await getDevice();
-    let walletInfo = await ledger.getWalletPublicKey(path);
-
+    
     // Transfer ETP
+    // let walletInfo = await ledger.getWalletPublicKey(path);
     // let tx = await buildTx(await walletInfo.bitcoinAddress); 
 
     // Transfer MST
     let tx = await transferMST(0.1234, "DNA");
-    
-    let split_tx = await ledger.splitTransaction(await tx.encode().toString("hex"));
+
+    const encoded_tx = tx.encode()
 
     let inputs = []
     let outputs = []
-    let outputScriptChunks = []
-    await tx.inputs.forEach((tx_input, index) => {
-        console.log(tx_input);    
+    await encoded_tx.inputs.forEach((tx_input, index) => {
         const input = {
-            "prevout": split_tx.inputs[index].prevout,
-            // "prevout": Buffer.from(tx_input.previous_output.hash, 'hex').reverse(),
-            "vout": tx_input.previous_output.index,
-            "script": Metaverse.script.fromASM(tx_input.previous_output.script).buffer, 
+            "prevout": tx_input.slice(0,36),
+            "vout": tx_input.readUInt32LE(32,36),
+            "script": Metaverse.script.fromASM(tx.inputs[index].previous_output.script).buffer,
             "sequence": Buffer.from([255,255,255,255]) // disabled
         }
         inputs.push(input);
     });
-    await tx.outputs.forEach((tx_output) => {
-        let amount_buffer = Buffer.alloc(8)
-        amount_buffer.writeInt32LE(tx_output.value)
+    await encoded_tx.outputs.forEach((tx_output) => {
+        const attachment_start = tx_output.slice(8,9)[0] + 9
         const output = {
-            "amount": {"type":"Buffer","data": amount_buffer},
-            "script": Metaverse.encoder.outputScriptAsBuffer(tx_output).slice(1), // don't pass the first byte (length)
-            "postfix": Metaverse.encoder.attachmentAsBuffer(tx_output).toString("hex")
+            "amount": tx_output.slice(0,8), 
+            "script": tx_output.slice(9,attachment_start), // don't pass the first byte (length)
+            "postfix": tx_output.slice(attachment_start,).toString('hex')
         }
         outputs.push(output);
     });
-    await split_tx.outputs.forEach((tx_output) => {
-        const chunk = Buffer.from(tx_output.amount.toString("hex")+ tx_output.script.length.toString(16).padStart(2,0) + tx_output.script.toString("hex") , 'hex');
-        outputScriptChunks.push(chunk);
-    });
+    
+    // append number of output to start of first chunk
+    let outputScriptChunks = encoded_tx.outputs
+    outputScriptChunks[0] = Buffer.concat([Buffer.from([encoded_tx.outputs.length]), outputScriptChunks[0]])
 
     let associatedKeysets = ["44'/2302'/0'/0/0", "44'/2302'/0'/0/0"];
     let changePath = "44'/2302'/0'/0/0";
-    let outputsScript = split_tx.outputs.length.toString(16).padStart(2, '0') + ledger.serializeTransactionOutputs(split_tx).toString('hex');
+    let outputsScript = Buffer.concat(outputScriptChunks).toString('hex');
     let locktime = undefined;
     let sigHash = 1;
     let segwit = false;
@@ -232,17 +228,17 @@ const createLedgerTransaction = async function() {
     let expiryHeight = undefined;
     let options = {
         version: 4,
-        outputsPrefix: "0808",
+        outputsPrefix: "040400",
         outputScriptChunks: outputScriptChunks,
     };
 
     let ledger_inputs = [
         [
             {
-                "version": Buffer.from([4,0,0,0]),
+                "version": encoded_tx.version,
                 "inputs": inputs,
                 "outputs": outputs,
-                "locktime": Buffer.from([0,0,0,0]),
+                "locktime": encoded_tx.locktime,
                 "timestamp": Buffer.from([]),
                 "nVersionGroupId": Buffer.from([]),
                 "nExpiryHeight": Buffer.from([]),
@@ -255,6 +251,7 @@ const createLedgerTransaction = async function() {
     ];
 
     const transaction = await ledger.createPaymentTransactionNew(
+    // const ledger_object = {
         ledger_inputs,
         associatedKeysets,
         changePath,
@@ -266,6 +263,7 @@ const createLedgerTransaction = async function() {
         additionals,
         expiryHeight,
         options
+    // }
     );
 
     await ledger.close();
@@ -277,3 +275,4 @@ const createLedgerTransaction = async function() {
 
 // createDummyTransaction();
 createLedgerTransaction();
+
