@@ -148,8 +148,41 @@ const registerMITTx = async (issuer, symbol, content) => {
   }
 };
 
+const transferMITTx = async (sender_avatar, symbol, recipient_avatar) => {
+  let recipient_avatar_info = await getAvatar(recipient_avatar);
+  let recipient_address = recipient_avatar_info.address;
+
+  let sender_avatar_info = await getAvatar(sender_avatar);
+  let sender = sender_avatar_info.address;
+
+  let change_address = sender;
+
+  let height = await blockchain.height();
+  let txs = await blockchain.addresses.txs([sender]);
+
+  let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [sender]); //Get all utxo
+
+  let results = await Promise.all([
+    Metaverse.output.findUtxo(utxos, {}, height),
+    Metaverse.output.filter(utxos, {
+      symbol: symbol
+    })
+  ]);
+  let tx = await Metaverse.transaction_builder.transferMIT(
+    results[0].utxo.concat(results[1]),
+    sender_avatar,
+    recipient_address,
+    recipient_avatar,
+    symbol,
+    change_address,
+    results[0].change
+  );
+  return tx;
+};
+
 module.exports.ETPTransferTx = ETPTransferTx;
 module.exports.didRegisterTx = didRegisterTx;
 module.exports.issueMSTTx = issueMSTTx;
 module.exports.transferMSTTx = transferMSTTx;
 module.exports.registerMITTx = registerMITTx;
+module.exports.transferMITTx = transferMITTx;

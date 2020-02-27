@@ -81,18 +81,34 @@ async function createWallet() {
 
 // transferMST()
 
-const registerMIT = async () => {
-  let tx = await txBuilder.registerMITTx(
+// const registerMIT = async () => {
+//   let tx = await txBuilder.registerMITTx(
+//     "lilSister",
+//     "MITTTTT",
+//     "The content goes in here"
+//   );
+//   console.log(tx);
+//   let wallet = await createWallet();
+//   tx = await wallet.sign(tx);
+//   tx = await tx.encode();
+//   tx = await blockchain.transaction.broadcast(tx.toString("hex"));
+//   console.log("TxHash for MITRegister =>", tx);
+// };
+
+// registerMIT();
+
+const transferMIT = async () => {
+  let tx = await txBuilder.transferMITTx(
     "lilSister",
     "MITTTTT",
-    "The content goes in here"
+    "BENLADEN"
   );
   console.log(tx);
   let wallet = await createWallet();
   tx = await wallet.sign(tx);
   tx = await tx.encode();
   tx = await blockchain.transaction.broadcast(tx.toString("hex"));
-  console.log("TxHash for MITRegister =>", tx);
+  console.log("transferMIT Tx in test file =>", tx);
 };
 
-registerMIT();
+transferMIT();
