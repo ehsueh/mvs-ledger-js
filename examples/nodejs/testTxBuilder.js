@@ -45,22 +45,22 @@ async function createWallet() {
 
 // registerAvatar();
 
-const issueMST = async () => {
-  let tx = await txBuilder.issueMSTTx(
-    "lilSister",
-    "MSTTTTT",
-    1000000,
-    4,
-    "description for MST.Symbol"
-  );
-  let wallet = await createWallet();
-  tx = await wallet.sign(tx)
-  tx = await tx.encode()
-  tx = await blockchain.transaction.broadcast(tx.toString('hex'))
-  console.log("TxHash in test file =>", tx)
-};
+// const issueMST = async () => {
+//   let tx = await txBuilder.issueMSTTx(
+//     "lilSister",
+//     "MSTTTTT",
+//     1000000,
+//     4,
+//     "description for MST.Symbol"
+//   );
+//   let wallet = await createWallet();
+//   tx = await wallet.sign(tx)
+//   tx = await tx.encode()
+//   tx = await blockchain.transaction.broadcast(tx.toString('hex'))
+//   console.log("TxHash in test file =>", tx)
+// };
 
-issueMST();
+// issueMST();
 // const getAvatar = async avatar_symbol => {
 //   let avatarInfo = await blockchain.avatar.get(avatar_symbol);
 //   console.log(avatarInfo)
@@ -68,3 +68,47 @@ issueMST();
 // };
 
 // getAvatar("lilSister")
+
+// const transferMST = async() => {
+//   let tx = await txBuilder.transferMSTTx("tD2tYRPZkUjTWx4RtGMKj5M1j8cJdzBR47", 30000, "tNvPjGatHFdNGK1EdFXaThZ5DmGhq3NuYj", "MSTTTTT")
+//   console.log(tx)
+//   let wallet = await createWallet()
+//   tx = await wallet.sign(tx)
+//   tx = await tx.encode()
+//   tx = await blockchain.transaction.broadcast(tx.toString("hex"))
+//   console.log("TxHash for MSTtransfer => ", tx)
+// }
+
+// transferMST()
+
+// const registerMIT = async () => {
+//   let tx = await txBuilder.registerMITTx(
+//     "lilSister",
+//     "MITTTTT",
+//     "The content goes in here"
+//   );
+//   console.log(tx);
+//   let wallet = await createWallet();
+//   tx = await wallet.sign(tx);
+//   tx = await tx.encode();
+//   tx = await blockchain.transaction.broadcast(tx.toString("hex"));
+//   console.log("TxHash for MITRegister =>", tx);
+// };
+
+// registerMIT();
+
+const transferMIT = async () => {
+  let tx = await txBuilder.transferMITTx(
+    "lilSister",
+    "MITTTTT",
+    "BENLADEN"
+  );
+  console.log(tx);
+  let wallet = await createWallet();
+  tx = await wallet.sign(tx);
+  tx = await tx.encode();
+  tx = await blockchain.transaction.broadcast(tx.toString("hex"));
+  console.log("transferMIT Tx in test file =>", tx);
+};
+
+transferMIT();
