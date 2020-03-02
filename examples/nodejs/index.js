@@ -6,6 +6,14 @@ const Blockchain = require("mvs-blockchain");
 const TransportHID = require('@ledgerhq/hw-transport-node-hid').default;
 const BtcApp = require('./ledgerjs-hw-app-btc').default;
 
+
+const blockchain = Blockchain({
+    url: "https://explorer.mvs.org/api/"
+});   
+const path = "44'/2302'/1'/0/0";
+const recipient_address = "MNWVbJuNxq9FQNL1bWXx5sXiFRKjcFuuj9" //  "44'/2302'/0'/0/0";
+const from_address = "MT7By3irp1nzTvha3zGe7t8h61HtUSzTAn" // "44'/2302'/1'/0/0";
+
 const getDevice = async () => {
     let transport = await TransportHID.create();
     let ledger = new BtcApp(transport);
@@ -14,18 +22,12 @@ const getDevice = async () => {
     return ledger;
 };
 
-const blockchain = Blockchain({
-    url: "https://explorer.mvs.org/api/"
-});   
-const path = "44'/2302'/0'/0/0";
-
 const buildTx = async address => {
 
     let target = {
         ETP: 100 //100 million units = 1 ETP
     };
 
-    let recipient_address = "MT7By3irp1nzTvha3zGe7t8h61HtUSzTAn";
     let height = await blockchain.height();
     let txs = await blockchain.addresses.txs([address]);
     let utxos = await Metaverse.output.calculateUtxo(txs.transactions, [
@@ -52,12 +54,10 @@ const buildTx = async address => {
 };
 
 
+
 async function transferMST(amount,MSTSymbol) {
 
     amount = parseInt(amount * 10**4)
-    recipient_address = "MNWVbJuNxq9FQNL1bWXx5sXiFRKjcFuuj9"
-    from_address = "MT7By3irp1nzTvha3zGe7t8h61HtUSzTAn"
-  
     let target = {};
     target[MSTSymbol] = amount
     console.log(target)
@@ -182,11 +182,12 @@ const createDummyTransaction = async function() {
 
 const createLedgerTransaction = async function() {
     const ledger = await getDevice();
-    
+    // Publick key
+    const pubkey = await ledger.getWalletPublicKey("44'/2302'/");
     // Transfer ETP
-    // let walletInfo = await ledger.getWalletPublicKey(path);
+    let walletInfo = await ledger.getWalletPublicKey(path);
     // let tx = await buildTx(await walletInfo.bitcoinAddress); 
-
+    
     // Transfer MST
     let tx = await transferMST(0.1234, "DNA");
 
@@ -215,10 +216,12 @@ const createLedgerTransaction = async function() {
     
     // append number of output to start of first chunk
     let outputScriptChunks = encoded_tx.outputs
-    outputScriptChunks[0] = Buffer.concat([Buffer.from([encoded_tx.outputs.length]), outputScriptChunks[0]])
+    outputScriptChunks[0] = Buffer.concat([Buffer.from([encoded_tx.outputs.length-1]), outputScriptChunks[0]])
+    // outputScriptChunks[1] = outputScriptChunks[2]
+    // outputScriptChunks = outputScriptChunks.slice(0,2)
 
-    let associatedKeysets = ["44'/2302'/0'/0/0", "44'/2302'/0'/0/0"];
-    let changePath = "44'/2302'/0'/0/0";
+    let associatedKeysets = [path, path];
+    let changePath = path;
     let outputsScript = Buffer.concat(outputScriptChunks).toString('hex');
     let locktime = undefined;
     let sigHash = 1;
@@ -250,8 +253,8 @@ const createLedgerTransaction = async function() {
         ]
     ];
 
-    const transaction = await ledger.createPaymentTransactionNew(
-    // const ledger_object = {
+    // const transaction = await ledger.createPaymentTransactionNew(
+    const ledger_object = {
         ledger_inputs,
         associatedKeysets,
         changePath,
@@ -263,8 +266,8 @@ const createLedgerTransaction = async function() {
         additionals,
         expiryHeight,
         options
-    // }
-    );
+    }
+    // );
 
     await ledger.close();
 
