@@ -179,19 +179,8 @@ const createDummyTransaction = async function() {
     return transaction;
 }
 
-
-const createLedgerTransaction = async function() {
-    const ledger = await getDevice();
-    // Publick key
-    const pubkey = await ledger.getWalletPublicKey("44'/2302'/");
-    // Transfer ETP
-    let walletInfo = await ledger.getWalletPublicKey(path);
-    // let tx = await buildTx(await walletInfo.bitcoinAddress); 
-    
-    // Transfer MST
-    let tx = await transferMST(0.1234, "DNA");
-
-    const encoded_tx = tx.encode()
+const mvsTxnToLedgerInput = async function(tx, path) {
+    const encoded_tx = tx.encode() // modified encode.js to return {version, inputs (array of buffers), outputs (array of buffers), locktime}
 
     let inputs = []
     let outputs = []
@@ -213,12 +202,10 @@ const createLedgerTransaction = async function() {
         }
         outputs.push(output);
     });
-    
+
     // append number of output to start of first chunk
     let outputScriptChunks = encoded_tx.outputs
     outputScriptChunks[0] = Buffer.concat([Buffer.from([encoded_tx.outputs.length-1]), outputScriptChunks[0]])
-    // outputScriptChunks[1] = outputScriptChunks[2]
-    // outputScriptChunks = outputScriptChunks.slice(0,2)
 
     let associatedKeysets = [path, path];
     let changePath = path;
@@ -230,7 +217,7 @@ const createLedgerTransaction = async function() {
     let additionals = [];
     let expiryHeight = undefined;
     let options = {
-        version: 4,
+        version: tx.version,
         outputsPrefix: "040400",
         outputScriptChunks: outputScriptChunks,
     };
@@ -253,7 +240,6 @@ const createLedgerTransaction = async function() {
         ]
     ];
 
-    // const transaction = await ledger.createPaymentTransactionNew(
     const ledger_object = {
         ledger_inputs,
         associatedKeysets,
@@ -267,7 +253,47 @@ const createLedgerTransaction = async function() {
         expiryHeight,
         options
     }
-    // );
+
+    return ledger_object;
+}
+
+const createLedgerTransaction = async function() {
+    const ledger = await getDevice();
+    // Publick key
+    const pubkey = await ledger.getWalletPublicKey("44'/2302'/");
+    // Transfer ETP
+    let walletInfo = await ledger.getWalletPublicKey(path);
+    let tx = await buildTx(await walletInfo.bitcoinAddress); 
+    
+    // Transfer MST
+    // let tx = await transferMST(0.1234, "DNA");
+
+    // Transfer MIT
+    // let tx = await transferMITTx("AARONCHUNG", "mayday", "ehsueh")
+
+    // Create Avatar
+    // let tx = await didRegisterTx("SCAR", "MRw8nNC2mKuqsn9WVztH3uCcnDkid9h4zV")
+
+    // Issue MST
+    // let tx = await issueMSTTx("ehsueh", "RABBIT", 6992, 0, "rabBitcoin")
+    
+    // Issue MIT
+    // let tx = await registerMITTx("ehsueh", "Ephy", "Unicorn")
+
+    const ledger_object = await mvsTxnToLedgerInput(tx,path)
+    const transaction = await ledger.createPaymentTransactionNew(
+        ledger_object.ledger_inputs,
+        ledger_object.associatedKeysets,
+        ledger_object.changePath,
+        ledger_object.outputsScript,
+        ledger_object.locktime,
+        ledger_object.sigHash,
+        ledger_object.segwit,
+        ledger_object.initialTimestamp,
+        ledger_object.additionals,
+        ledger_object.expiryHeight,
+        ledger_object.options
+    );
 
     await ledger.close();
 
