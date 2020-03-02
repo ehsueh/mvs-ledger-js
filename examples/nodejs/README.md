@@ -77,3 +77,101 @@ To get the master extended public key for Metaverse, use Metaverse's slip number
 ```
 const xpub = await ledger.getWalletPublicKey("44'/2302'/").publicKey;
 ```
+
+### Preparing the ledger txn object from Metaverse's txn object (metaversejs)
+```
+const mvsTxnToLedgerInput = async function(tx, path) {
+    const encoded_tx = tx.encode() // modified encode.js to return {version, inputs (array of buffers), outputs (array of buffers), locktime}
+
+    let inputs = []
+    let outputs = []
+    await encoded_tx.inputs.forEach((tx_input, index) => {
+        const input = {
+            "prevout": tx_input.slice(0,36),
+            "vout": tx_input.readUInt32LE(32,36),
+            "script": Metaverse.script.fromASM(tx.inputs[index].previous_output.script).buffer,
+            "sequence": Buffer.from([255,255,255,255]) // disabled
+        }
+        inputs.push(input);
+    });
+    await encoded_tx.outputs.forEach((tx_output) => {
+        const attachment_start = tx_output.slice(8,9)[0] + 9
+        const output = {
+            "amount": tx_output.slice(0,8), 
+            "script": tx_output.slice(9,attachment_start), // don't pass the first byte (length)
+            "postfix": tx_output.slice(attachment_start,).toString('hex')
+        }
+        outputs.push(output);
+    });
+
+    // append number of output to start of first chunk
+    let outputScriptChunks = encoded_tx.outputs
+    outputScriptChunks[0] = Buffer.concat([Buffer.from([encoded_tx.outputs.length-1]), outputScriptChunks[0]])
+
+    let associatedKeysets = [path, path];
+    let changePath = path;
+    let outputsScript = Buffer.concat(outputScriptChunks).toString('hex');
+    let locktime = undefined;
+    let sigHash = 1;
+    let segwit = false;
+    let initialTimestamp = undefined;
+    let additionals = [];
+    let expiryHeight = undefined;
+    let options = {
+        version: tx.version,
+        outputsPrefix: "040400",
+        outputScriptChunks: outputScriptChunks,
+    };
+
+    let ledger_inputs = [
+        [
+            {
+                "version": encoded_tx.version,
+                "inputs": inputs,
+                "outputs": outputs,
+                "locktime": encoded_tx.locktime,
+                "timestamp": Buffer.from([]),
+                "nVersionGroupId": Buffer.from([]),
+                "nExpiryHeight": Buffer.from([]),
+                "extraData": Buffer.from([])
+            },
+            0,
+            null,
+            4294967295
+        ]
+    ];
+
+    const ledger_object = {
+        ledger_inputs,
+        associatedKeysets,
+        changePath,
+        outputsScript,
+        locktime,
+        sigHash,
+        segwit,
+        initialTimestamp,
+        additionals,
+        expiryHeight,
+        options
+    }
+
+    return ledger_object;
+}
+```
+
+### Signing a transaction
+```
+const transaction = await ledger.createPaymentTransactionNew(
+        ledger_inputs,
+        associatedKeysets,
+        changePath,
+        outputsScript,
+        locktime,
+        sigHash,
+        segwit,
+        initialTimestamp,
+        additionals,
+        expiryHeight,
+        options
+)
+```
