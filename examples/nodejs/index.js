@@ -79,6 +79,7 @@ async function transferMST(amount,MSTSymbol) {
 const createDummyTransaction = async function() {
 
     const ledger = await getDevice();
+ 
     let inputs = [
         [
             {
@@ -140,10 +141,10 @@ const createDummyTransaction = async function() {
             4294967295
         ]
     ];
-
+ 
     let associatedKeysets = ["44'/2302'/0'/0/0", "44'/2302'/0'/0/0"];
     let changePath = "44'/2302'/0'/0/0";
-    let outputsScript = "0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d20400000000000000000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000";
+    let outputsScript = "030300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d20400000000000000000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000";
     let locktime = undefined;
     let sigHash = 1;
     let segwit = false;
@@ -154,12 +155,12 @@ const createDummyTransaction = async function() {
         version: 4,
         outputsPrefix: "040400",
         outputScriptChunks: [
-            Buffer.from("0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e412d04000000000000", 'hex'),
+            Buffer.from("0300000000000000001976a914d2b0d45dfdba50fbd227f968c79a29ece05144fb88ac01000000020000000200000003444e41d204000000000000", 'hex'),
             Buffer.from("00000000000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac01000000020000000200000003444e413e22000000000000", 'hex'),
             Buffer.from("b0c66500000000001976a914a0407b04a4e65c269e7254ba1ab84affbdad6eec88ac0100000000000000", 'hex'),
         ],
     };
-
+ 
     const transaction = await ledger.createPaymentTransactionNew(
         inputs,
         associatedKeysets,
@@ -173,9 +174,11 @@ const createDummyTransaction = async function() {
         expiryHeight,
         options
     );
-
+ 
     await ledger.close();
+ 
     console.log('Signed transaction', transaction);
+ 
     return transaction;
 }
 
@@ -218,7 +221,7 @@ const mvsTxnToLedgerInput = async function(tx, path) {
     let expiryHeight = undefined;
     let options = {
         version: tx.version,
-        outputsPrefix: "040400",
+        outputsPrefix: "040400", // hardcoded for now, should change depending on output token type
         outputScriptChunks: outputScriptChunks,
     };
 
@@ -260,7 +263,7 @@ const mvsTxnToLedgerInput = async function(tx, path) {
 const createLedgerTransaction = async function() {
     const ledger = await getDevice();
     // Publick key
-    const pubkey = await ledger.getWalletPublicKey("44'/2302'/");
+    const pubkey = await ledger.getWalletPublicKey("44'/2302'/0'/0/0");
     // Transfer ETP
     let walletInfo = await ledger.getWalletPublicKey(path);
     let tx = await buildTx(await walletInfo.bitcoinAddress); 
@@ -302,6 +305,6 @@ const createLedgerTransaction = async function() {
     return transaction;
 };
 
-// createDummyTransaction();
-createLedgerTransaction();
+createDummyTransaction();
+// createLedgerTransaction();
 
